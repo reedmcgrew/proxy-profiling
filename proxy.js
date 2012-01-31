@@ -53,10 +53,27 @@ function is_query_start(data){
 		|| data_str[0] === "&";
 }
 
+function istr_contains(haystack,needle){
+	return haystack.toLowerCase().indexOf(needle.toLowerCase()) != -1;
+}
+
+function get_query_type(data){
+	var query = data + '';
+	var query_type = "blank";
+	if(query != null && query !== ''){
+		if(istr_contains(query,"select")) query_type = "select";
+		else if(istr_contains(query,"insert")) query_type = "insert";
+		else if(istr_contains(query,"update")) query_type = "update";
+		else if(istr_contains(query,"delete")) query_type = "delete";
+	}
+
+	return query_type;
+}
+
 function print_elapsed(start,stop,request){
 	var elapsed = stop - start;
-	console.log("profile,"+microtime()+","+elapsed+","+num_clients+","+request);
-
+	var query_type = get_query_type(request);
+	console.log(query_type+","+microtime()+","+elapsed+","+num_clients+","+request);
 }
 
 net.createServer(function (proxySocket) {
@@ -72,7 +89,7 @@ net.createServer(function (proxySocket) {
 
 	//Handle Data Coming from Client
         proxySocket.on("data", function (data) {
-		if(is_query_start(data)){
+		if(get_query_type(data) != "blank"){
 			start_time = microtime(true);
 		}
 		last_request += data;
@@ -89,10 +106,13 @@ net.createServer(function (proxySocket) {
 
 	//Log complete packets
 	parser.on('packet',function(packet){
-		//Log profile times and errors. EOF packets preceeded by ROW_DATA packets
-		//indicate the end of a query.
-		if(packet.type == Parser.EOF_PACKET 
-		&& last_packet_type != Parser.FIELD_PACKET){
+		//Determine whether this packet marks the end of a query
+		var marks_read_ending = (packet.type == Parser.EOF_PACKET &&
+			 		last_packet_type != Parser.FIELD_PACKET);
+		var marks_other_ending = packet.type == Parser.OK_PACKET;
+
+		//Log profile times and errors.
+		if(marks_read_ending || marks_other_ending){
 			print_elapsed(start_time,microtime(true),last_request);
 			last_request = '';
 			start_time = microtime(true);
