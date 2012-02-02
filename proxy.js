@@ -7,9 +7,9 @@ process.on("uncaughtException", function(err) {
         sys.puts(err);
 });
 
-if (process.argv.length != 5) {
+if (process.argv.length != 6) {
         sys.puts("Require the following command line arguments:" +
-                " proxy_port service_port service_host");
+                " proxy_port service_port service_host sampling_interval");
 	sys.puts(" e.g. 9001 80 www.google.com");
         process.exit();
 }
@@ -17,6 +17,7 @@ if (process.argv.length != 5) {
 var proxyPort = process.argv[2];
 var servicePort = process.argv[3];
 var serviceHost = process.argv[4];
+var sampling_interval = process.argv[5];
 var num_clients = 0;
 
 function microtime(as_seconds){
@@ -114,10 +115,13 @@ net.createServer(function (proxySocket) {
 
 		//Log profile times and errors.
 		if(marks_read_ending || marks_other_ending){
-			var pretty_query = clean_query(last_request);
-			print_elapsed(start_time,microtime(true),pretty_query);
+			var randomnumber = Math.floor(Math.random()*sampling_interval);
+			if(randomnumber == 0){
+				var pretty_query = clean_query(last_request);
+				print_elapsed(start_time,microtime(true),pretty_query);
+				start_time = microtime(true);
+			}
 			last_request = '';
-			start_time = microtime(true);
 		}
 		else if(packet.type == Parser.ERROR_PACKET){
 			console.log("error,"+microtime(true)+","+last_request);
