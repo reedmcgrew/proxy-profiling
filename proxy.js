@@ -1,9 +1,3 @@
-
-/*
- * WARNING: This proxy will only work with MySQL clients that wait for data
- * to be received from one request before sending another.
- */
-
 var sys = require("util");
 var net = require("net");
 var Parser = require('./parser');
@@ -59,7 +53,7 @@ function istr_contains(haystack,needle){
 
 function get_query_type(data){
 	var query = data + '';
-	var query_type = "blank";
+	var query_type = "other";
 	if(query != null && query !== ''){
 		if(istr_contains(query,"select")) query_type = "select";
 		else if(istr_contains(query,"insert")) query_type = "insert";
@@ -76,6 +70,13 @@ function print_elapsed(start,stop,request){
 	console.log(query_type+","+microtime()+","+elapsed+","+num_clients+","+request);
 }
 
+function clean_query(query){
+	query = query.replace(/\s+/g," ");
+	query = query.toLowerCase();
+	query = query.replace(/[^a-z0-9\`\'\"\!\=\<\>\\\,\(\)\s]/g,"");
+	return query;
+}
+
 net.createServer(function (proxySocket) {
 	num_clients++;
 	var start_time = microtime(true);
@@ -89,7 +90,7 @@ net.createServer(function (proxySocket) {
 
 	//Handle Data Coming from Client
         proxySocket.on("data", function (data) {
-		if(get_query_type(data) != "blank"){
+		if(get_query_type(data) != "other"){
 			start_time = microtime(true);
 		}
 		last_request += data;
@@ -113,12 +114,13 @@ net.createServer(function (proxySocket) {
 
 		//Log profile times and errors.
 		if(marks_read_ending || marks_other_ending){
-			print_elapsed(start_time,microtime(true),last_request);
+			var pretty_query = clean_query(last_request);
+			print_elapsed(start_time,microtime(true),pretty_query);
 			last_request = '';
 			start_time = microtime(true);
 		}
 		else if(packet.type == Parser.ERROR_PACKET){
-			console.log("error,"+last_request);
+			console.log("error,"+microtime(true)+","+last_request);
 			last_request = '';
 		}
 
