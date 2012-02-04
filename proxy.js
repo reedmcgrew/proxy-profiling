@@ -68,7 +68,7 @@ function get_query_type(data){
 function print_elapsed(start,stop,request){
 	var elapsed = stop - start;
 	var query_type = get_query_type(request);
-	console.log(query_type+","+microtime()+","+elapsed+","+num_clients+","+request);
+	console.log(query_type+","+microtime(false)+","+elapsed+","+num_clients+","+request);
 }
 
 function clean_query(query){
@@ -117,7 +117,7 @@ net.createServer(function (proxySocket) {
 		if(marks_read_ending || marks_other_ending){
 			var randomnumber = Math.floor(Math.random()*sampling_interval);
 			if(randomnumber == 0){
-				var pretty_query = clean_query(last_request);
+				var pretty_query = "|"+clean_query(last_request)+"|";
 				print_elapsed(start_time,microtime(true),pretty_query);
 				start_time = microtime(true);
 			}
