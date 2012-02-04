@@ -1,0 +1,8 @@
+## Profiling proxy servers for MySQL, HTTP, and HTTPS
+This project currently contains just a MySQL protocol proxy that profiles inserts, updates, deletes, and selects.  It is very rough around the edges right now, and the code is not very well structured yet.  Thanks to Devendra Tewari for his blog post http://delog.wordpress.com/2011/04/08/a-simple-tcp-proxy-in-node-js/ which provided a very minimal starting point for the MySQL proxy.  Also, I have taken the MySQL protocol parser from the mysql-node project.  Despite these blemishes, it works for our bare-bones needs right now.
+
+##TODO:
+- Make the code structure not suck.
+- Add a package.js
+- Change the source code to rely directly on the node-mysql project for its parser instead of the parser source file that was copied verbatim.
+
